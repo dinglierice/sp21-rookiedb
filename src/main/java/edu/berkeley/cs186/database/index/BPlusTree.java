@@ -324,9 +324,7 @@ public class BPlusTree {
         // TODO(proj4_integration): Update the following line
         LockUtil.ensureSufficientLockHeld(lockContext, LockType.NL);
 
-        // TODO(proj2): implement
-
-        return;
+        this.root.remove(key);
     }
 
     // Helpers /////////////////////////////////////////////////////////////////
