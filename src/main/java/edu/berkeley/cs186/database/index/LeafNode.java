@@ -11,6 +11,7 @@ import edu.berkeley.cs186.database.table.RecordId;
 
 import java.nio.ByteBuffer;
 import java.util.*;
+import javax.xml.crypto.Data;
 
 /**
  * A leaf of a B+ tree. Every leaf in a B+ tree of order d stores between d and
@@ -195,9 +196,49 @@ class LeafNode extends BPlusNode {
     @Override
     public Optional<Pair<DataBox, Long>> bulkLoad(Iterator<Pair<DataBox, RecordId>> data,
             float fillFactor) {
-        // TODO(proj2): implement
+        if (!data.hasNext()) {
+            return Optional.empty();
+        }
+        int treeOrder = this.metadata.getOrder();
+        while (keys.size() < Math.ceil(fillFactor * treeOrder * 2) && data.hasNext()) {
+            Pair<DataBox, RecordId> pair = data.next();
+            DataBox key = pair.getFirst();
+            if (this.keys.contains(key)) {
+                throw new BPlusTreeException("Duplicate keys not allowed");
+            }
+            RecordId rid = pair.getSecond();
+            this.keys.add(key);
+            this.rids.add(rid);
+        }
 
-        return Optional.empty();
+        if (data.hasNext()) {
+            List<DataBox> rightKeys = new ArrayList<>();
+            List<RecordId> rightRids = new ArrayList<>();
+            Pair<DataBox, RecordId> pair = data.next();
+            DataBox key = pair.getFirst();
+            if (this.keys.contains(key)) {
+                throw new BPlusTreeException("Duplicate keys not allowed");
+            }
+            RecordId rid = pair.getSecond();
+            rightKeys.add(key);
+            rightRids.add(rid);
+
+            LeafNode splitNode = new LeafNode(
+                this.metadata,
+                this.bufferManager,
+                rightKeys,
+                rightRids,
+                this.rightSibling,
+                this.treeContext
+            );
+
+            this.rightSibling = Optional.of(splitNode.getPage().getPageNum());
+            sync();
+            return Optional.of(new Pair<>(key, splitNode.getPage().getPageNum()));
+        } else {
+            sync();
+            return Optional.empty();
+        }
     }
 
     // See BPlusNode.remove.
