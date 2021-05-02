@@ -199,9 +199,7 @@ public class BPlusTree {
         // TODO(proj4_integration): Update the following line
         LockUtil.ensureSufficientLockHeld(lockContext, LockType.NL);
 
-        // TODO(proj2): Return a BPlusTreeIterator.
-
-        return Collections.emptyIterator();
+        return new BPlusTreeIterator(this.root.getLeftmostLeaf(), Optional.empty());
     }
 
     /**
@@ -232,9 +230,9 @@ public class BPlusTree {
         // TODO(proj4_integration): Update the following line
         LockUtil.ensureSufficientLockHeld(lockContext, LockType.NL);
 
-        // TODO(proj2): Return a BPlusTreeIterator.
+        LeafNode leftMostGreaterEqual = this.root.get(key);
 
-        return Collections.emptyIterator();
+        return new BPlusTreeIterator(leftMostGreaterEqual, Optional.of(key));
     }
 
     /**
@@ -436,20 +434,44 @@ public class BPlusTree {
 
     // Iterator ////////////////////////////////////////////////////////////////
     private class BPlusTreeIterator implements Iterator<RecordId> {
-        // TODO(proj2): Add whatever fields and constructors you want here.
+        private Deque<RecordId> stack;
+        private LeafNode curNode;
+
+        public BPlusTreeIterator(LeafNode curNode, Optional<DataBox> key) {
+            this.curNode = curNode;
+            this.stack = initStack(curNode, key);
+        }
+
+        private Deque<RecordId> initStack(LeafNode node, Optional<DataBox> key) {
+            Deque<RecordId> s = new ArrayDeque<>();
+            if (!key.isPresent()) {
+                s.addAll(node.getRids());
+            } else {
+                DataBox comparedKey = key.get();
+                for (int i = 0; i < node.getKeys().size(); i++) {
+                    if (node.getKeys().get(i).compareTo(comparedKey) >= 0) {
+                        s.addLast(node.getRids().get(i));
+                    }
+                }
+            }
+
+            return s;
+        }
 
         @Override
         public boolean hasNext() {
-            // TODO(proj2): implement
-
-            return false;
+            return !this.stack.isEmpty();
         }
 
         @Override
         public RecordId next() {
-            // TODO(proj2): implement
+            RecordId next = this.stack.removeFirst();
+            if (this.stack.isEmpty() && curNode.getRightSibling().isPresent()) {
+                curNode = curNode.getRightSibling().get();
+                this.stack = initStack(curNode, Optional.empty());
+            }
 
-            throw new NoSuchElementException();
+            return next;
         }
     }
 }
