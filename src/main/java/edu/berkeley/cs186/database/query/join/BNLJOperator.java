@@ -89,7 +89,7 @@ public class BNLJOperator extends JoinOperator {
             if (this.leftSourceIterator.hasNext()) {
                 this.leftBlockIterator = getBlockIterator(
                     this.leftSourceIterator,
-                    BNLJOperator.this.outputSchema,
+                    BNLJOperator.this.getLeftSource().getSchema(),
                     BNLJOperator.this.numBuffers - 2
                 );
 
@@ -97,9 +97,6 @@ public class BNLJOperator extends JoinOperator {
                     this.leftRecord = this.leftBlockIterator.next();
                     this.leftBlockIterator.markPrev();
                 }
-            } else {
-                this.leftBlockIterator = null;
-                this.leftRecord = null;
             }
         }
 
@@ -117,12 +114,10 @@ public class BNLJOperator extends JoinOperator {
             if (this.rightSourceIterator.hasNext()) {
                 this.rightPageIterator = getBlockIterator(
                     this.rightSourceIterator,
-                    BNLJOperator.this.outputSchema,
+                    BNLJOperator.this.getRightSource().getSchema(),
                     1
                 );
                 this.rightPageIterator.markNext();
-            } else {
-                this.rightPageIterator = null;
             }
         }
 
@@ -143,7 +138,7 @@ public class BNLJOperator extends JoinOperator {
                     if (compare(leftRecord, rightRecord) == 0) {
                         nextRecord = leftRecord.concat(rightRecord);
                     }
-                } else if (this.leftBlockIterator != null && this.leftBlockIterator.hasNext()) {
+                } else if (this.leftBlockIterator.hasNext()) {
                     // Case 2: The right page iterator doesn't have a value to yield
                     // but the left block iterator does
                     this.leftRecord = this.leftBlockIterator.next();
@@ -158,7 +153,8 @@ public class BNLJOperator extends JoinOperator {
                     // Case 4: Neither right page nor left block iterators have values
                     // nor are there more right pages, but there are still left blocks
                     fetchNextLeftBlock();
-                    this.rightPageIterator.reset();
+                    this.rightSourceIterator.reset();
+                    fetchNextRightPage();
                 } else {
                     break;
                 }

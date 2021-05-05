@@ -50,7 +50,9 @@ public class TestNestedLoopJoin {
 
     @After
     public void cleanup() {
-        for (Page p : pinnedPages.values()) p.unpin();
+        for (Page p : pinnedPages.values()) {
+            p.unpin();
+        }
         d.close();
     }
 
@@ -65,11 +67,11 @@ public class TestNestedLoopJoin {
     }
 
     private void checkIOs(String message, long minIOs, long maxIOs) {
-        if (message == null) message = "";
-        else message = "(" + message + ")";
+        message = (message == null) ? "" : "(" + message + ")";
+
         long newIOs = d.getBufferManager().getNumIOs();
         long IOs = newIOs - numIOs;
-        assertTrue(IOs + " I/Os not between " + minIOs + " and " + maxIOs + message,
+        assertTrue(IOs + " I/Os not between " + minIOs + " and " + maxIOs + " " + message,
                    minIOs <= IOs && IOs <= maxIOs);
         numIOs = newIOs;
     }
@@ -342,7 +344,7 @@ public class TestNestedLoopJoin {
         // 1 | x   | x   |
         //   +-----+-----+
         //     1 2 | 1 2
-        try(Transaction transaction = d.beginTransaction()) {
+        try (Transaction transaction = d.beginTransaction()) {
             // This whole section is just to generate the tables described above
             Record r1 = TestUtils.createRecordWithAllTypesWithValue(1);
             Record r2 = TestUtils.createRecordWithAllTypesWithValue(2);
@@ -466,7 +468,7 @@ public class TestNestedLoopJoin {
         // Note that the left (vertical) relation will be processed in blocks
         // (B=4)
         d.setWorkMem(4); // B=4
-        try(Transaction transaction = d.beginTransaction()) {
+        try (Transaction transaction = d.beginTransaction()) {
             // This whole section is just to generate the tables described above
             Record r1 = TestUtils.createRecordWithAllTypesWithValue(1);
             Record r2 = TestUtils.createRecordWithAllTypesWithValue(2);
@@ -506,8 +508,13 @@ public class TestNestedLoopJoin {
             startCountIOs();
 
             // Constructing the operator should incur 0 IOs
-            QueryOperator joinOperator = new BNLJOperator(leftSourceOperator, rightSourceOperator, "int", "int",
-                    transaction.getTransactionContext());
+            QueryOperator joinOperator = new BNLJOperator(
+                leftSourceOperator,
+                rightSourceOperator,
+                "int",
+                "int",
+                transaction.getTransactionContext()
+            );
             checkIOs(0);
 
             // Creating the iterator should incur 3 IOs, one for the first right
