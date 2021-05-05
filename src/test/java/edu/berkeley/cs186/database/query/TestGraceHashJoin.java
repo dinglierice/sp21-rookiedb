@@ -137,7 +137,7 @@ public class TestGraceHashJoin {
     @Test
     @Category(PublicTests.class)
     public void testGHJDifferentSchemas() {
-        try(Transaction transaction = d.beginTransaction()) {
+        try (Transaction transaction = d.beginTransaction()) {
             d.setWorkMem(3); // B=3
             Schema leftSchema = new Schema()
                 .add("int", Type.intType())
@@ -147,8 +147,6 @@ public class TestGraceHashJoin {
             List<Record> leftRecords = new ArrayList<>();
             List<Record> rightRecords = new ArrayList<>();
             Set<Record> expectedOutput = new HashSet<>();
-
-            d.setWorkMem(3);
 
             for (int i = 0; i < 1860; i++) {
                 Record left = new Record(i, "I love 186");
@@ -174,7 +172,9 @@ public class TestGraceHashJoin {
             );
 
             List<Record> output = new ArrayList<>();
-            for (Record record: ghj) output.add(record);
+            for (Record record: ghj) {
+                output.add(record);
+            }
 
             assertEquals(1674, output.size());
 
@@ -190,7 +190,7 @@ public class TestGraceHashJoin {
     @Test
     @Category(PublicTests.class)
     public void testBreakSHJButPassGHJ() {
-        try(Transaction transaction = d.beginTransaction()) {
+        try (Transaction transaction = d.beginTransaction()) {
             Schema schema = new Schema()
                     .add("int", Type.intType())
                     .add("string", Type.stringType(500));
@@ -207,11 +207,16 @@ public class TestGraceHashJoin {
             );
             try {
                 Iterator<Record> iter = shj.iterator();
-                while(iter.hasNext()) iter.next();
+                while (iter.hasNext()) {
+                    iter.next();
+                }
                 fail("SHJ worked! It shouldn't have...");
             } catch (Exception e) {
-                assertEquals("Simple Hash failed for the wrong reason!",
-                        "The records in this partition cannot fit in B-2 pages of memory.", e.getMessage());
+                assertEquals(
+                    "Simple Hash failed for the wrong reason!",
+                    "The records in this partition cannot fit in B-2 pages of memory.",
+                    e.getMessage()
+                );
             }
 
             GHJOperator ghj = new GHJOperator(
@@ -223,7 +228,9 @@ public class TestGraceHashJoin {
 
             try {
                 Iterator<Record> iter = ghj.iterator();
-                while(iter.hasNext()) iter.next();
+                while (iter.hasNext()) {
+                    iter.next();
+                }
             } catch (Exception e) {
                 fail(e.getMessage());
             }
