@@ -285,17 +285,22 @@ public class TestNestedLoopJoin {
         // This test is identical to the above test, but uses your BNLJ
         // with B=5 instead.
         d.setWorkMem(5); // B=5
-        try(Transaction transaction = d.beginTransaction()) {
+        try (Transaction transaction = d.beginTransaction()) {
             setSourceOperators(
-                    TestUtils.createSourceWithAllTypes(100),
-                    TestUtils.createSourceWithAllTypes(100),
-                    transaction
+                TestUtils.createSourceWithAllTypes(100),
+                TestUtils.createSourceWithAllTypes(100),
+                transaction
             );
 
             startCountIOs();
 
-            JoinOperator joinOperator = new BNLJOperator(leftSourceOperator, rightSourceOperator, "int", "int",
-                    transaction.getTransactionContext());
+            JoinOperator joinOperator = new BNLJOperator(
+                leftSourceOperator,
+                rightSourceOperator,
+                "int",
+                "int",
+                transaction.getTransactionContext()
+            );
             checkIOs(0);
 
             Iterator<Record> outputIterator = joinOperator.iterator();
